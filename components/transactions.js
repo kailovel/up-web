@@ -14,20 +14,30 @@ export default function Transactions(props) {
     const fetchData = async () => {
       const res = await fetch(props.url, { headers });
       const transactions = await res.json();
-
+  
       const transactionsWithDates = transactions.data.map((transaction) => {
         const createdAt = moment(transaction.attributes.createdAt);
         const timeString = createdAt.format('h:mma');
         const dateString = createdAt.format('ddd, D MMMM yyyy');
         return { transaction, timeString, dateString };
       });
-
+  
+      // Sort transactions by date in descending order
+      const sortedTransactions = transactionsWithDates.sort((a, b) => {
+        return moment(b.transaction.attributes.createdAt).diff(
+          moment(a.transaction.attributes.createdAt)
+        );
+      });
+  
+      // Take only the most recent 3 transactions
+      const limitedTransactions = sortedTransactions.slice(0, 3);
+  
       setTransactionsByDate(
-        Object.entries(groupBy(transactionsWithDates, 'dateString'))
+        Object.entries(groupBy(limitedTransactions, 'dateString'))
       );
     };
     fetchData();
-  }, []);
+  }, []);  
 
   return (
     <div className={styles.outer}>
@@ -49,7 +59,7 @@ export default function Transactions(props) {
                   key={record.transaction.id}
                   transaction={record.transaction}
                   timeString={record.timeString}
-                  last={index + 1 === records.length}
+                  last={index + 10 === records.length}
                 />
               ))}
             </React.Fragment>
